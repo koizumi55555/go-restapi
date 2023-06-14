@@ -30,6 +30,6 @@ func (uuc UserUsecase) CreateUser(createUser entitiy.User) (user entitiy.User, e
 	return uuc.PostgresIf.CreateUserDB(createUser)
 }
 
-func (uuc UserUsecase) GetListUsers() (user []entitiy.User, err error) {
-	return uuc.PostgresIf.GetListUsersDB()
+func (uuc UserUsecase) ListUsers() (user []entitiy.User, err error) {
+	return uuc.PostgresIf.ListUsersDB()
 }
