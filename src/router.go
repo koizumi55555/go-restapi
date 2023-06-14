@@ -13,7 +13,7 @@ func Server(uc controller.UserController) *gin.Engine {
 	engine.DELETE("/users/:user_id", uc.DeleteUser)
 	engine.PUT("/users/:user_id", uc.UpdateUser)
 	engine.POST("/users", uc.CreateUser)
-	engine.GET("/users", uc.GetListUsers)
+	engine.GET("/users", uc.ListUsers)
 
 	return engine
 }
