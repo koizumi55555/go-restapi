@@ -25,15 +25,10 @@ func (uc UserController) GetUser(c *gin.Context) {
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessaga": err.Error(),
+			"ErrorMessage": err.Error(),
 		})
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"ID":    user.ID,
-		"Name":  user.Name,
-		"Email": user.Email,
-	})
+	c.JSON(http.StatusOK, user)
 }
 
 // ユーザの削除
@@ -42,13 +37,10 @@ func (uc UserController) DeleteUser(c *gin.Context) {
 	err := uc.UserUsecase.DeleteUser(c.Param("user_id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessaga": err.Error(),
+			"ErrorMessage": err.Error(),
 		})
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"delete": "succese",
-	})
+	c.JSON(http.StatusNoContent, gin.H{})
 }
 
 // ユーザ情報の更新
@@ -56,25 +48,23 @@ func (uc UserController) UpdateUser(c *gin.Context) {
 
 	var json entitiy.User
 	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ErrorMessaga": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"ErrorMessage": err.Error()})
 		return
 	}
 
-	updateUser := entitiy.User{}
-	updateUser.ID = c.Param("user_id")
-	updateUser.Name = json.Name
-	updateUser.Email = json.Email
+	updateUser := entitiy.User{
+		ID:    c.Param("user_id"),
+		Name:  json.Name,
+		Email: json.Email,
+	}
+
 	user, err := uc.UserUsecase.UpdateUser(updateUser)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessaga": err.Error(),
+			"ErrorMessage": err.Error(),
 		})
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"ID":    user.ID,
-		"Name":  user.Name,
-		"Email": user.Email,
-	})
+	c.JSON(http.StatusOK, user)
 }
 
 // ユーザの登録
@@ -82,43 +72,33 @@ func (uc UserController) CreateUser(c *gin.Context) {
 
 	var json entitiy.User
 	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ErrorMessaga": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"ErrorMessage": err.Error()})
 		return
 	}
 
-	createUser := entitiy.User{}
-	createUser.Name = json.Name
-	createUser.Email = json.Email
+	createUser := entitiy.User{
+		Name:  json.Name,
+		Email: json.Email,
+	}
 
 	user, err := uc.UserUsecase.CreateUser(createUser)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessaga": err.Error(),
+			"ErrorMessage": err.Error(),
 		})
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"ID":    user.ID,
-		"Name":  user.Name,
-		"Email": user.Email,
-	})
+	c.JSON(http.StatusOK, user)
 }
 
 // ユーザ情報の一覧取得
-func (uc UserController) GetListUsers(c *gin.Context) {
+func (uc UserController) ListUsers(c *gin.Context) {
 
-	user, err := uc.UserUsecase.GetListUsers()
+	user, err := uc.UserUsecase.ListUsers()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessaga": err.Error(),
+			"ErrorMessage": err.Error(),
 		})
 	}
-
-	for i := 0; i < len(user); i++ {
-		c.JSON(http.StatusOK, gin.H{
-			"ID":    user[i].ID,
-			"Name":  user[i].Name,
-			"Email": user[i].Email,
-		})
-	}
+	c.JSON(http.StatusOK, user)
 
 }
