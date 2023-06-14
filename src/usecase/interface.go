@@ -7,5 +7,5 @@ type PostgresIf interface {
 	DeleteUserDB(id string) (err error)
 	UpdateUserDB(updateUser entitiy.User) (user entitiy.User, err error)
 	CreateUserDB(createUser entitiy.User) (user entitiy.User, err error)
-	GetListUsersDB() (user []entitiy.User, err error)
+	ListUsersDB() (user []entitiy.User, err error)
 }
