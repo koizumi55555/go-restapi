@@ -19,11 +19,23 @@ func (uuc UserUsecase) GetUser(id string) (user entitiy.User, err error) {
 }
 
 func (uuc UserUsecase) DeleteUser(id string) (err error) {
-	return uuc.PostgresIf.DeleteUserDB(id)
+
+	getUser, err := uuc.PostgresIf.GetUserDB(id)
+	if err != nil {
+		return err
+	}
+
+	return uuc.PostgresIf.DeleteUserDB(getUser.ID)
 }
 
 func (uuc UserUsecase) UpdateUser(updateUser entitiy.User) (user entitiy.User, err error) {
-	return uuc.PostgresIf.UpdateUserDB(updateUser)
+
+	getUser, err := uuc.PostgresIf.GetUserDB(updateUser.ID)
+	if err != nil {
+		return getUser, err
+	}
+
+	return uuc.PostgresIf.UpdateUserDB(getUser, updateUser)
 }
 
 func (uuc UserUsecase) CreateUser(createUser entitiy.User) (user entitiy.User, err error) {
