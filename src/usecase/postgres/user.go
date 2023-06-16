@@ -15,7 +15,7 @@ func (p Postgres) GetUserDB(id string) (user entitiy.User, err error) {
 	getResult := p.Conn.Find(&resultUser, "id = ?", id)
 
 	if getResult.Error != nil || resultUser.ID == "" {
-		if errors.Is(getResult.Error, gorm.ErrRecordNotFound) || resultUser.ID != "" {
+		if errors.Is(getResult.Error, gorm.ErrRecordNotFound) || resultUser.ID == "" {
 			return entitiy.User{}, gorm.ErrRecordNotFound
 		}
 		return entitiy.User{}, getResult.Error
