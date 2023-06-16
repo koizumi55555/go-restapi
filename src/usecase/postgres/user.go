@@ -14,7 +14,10 @@ func (p Postgres) GetUserDB(id string) (user entitiy.User, err error) {
 	resultUser := Users{}
 	getResult := p.Conn.Find(&resultUser, "id = ?", id)
 
-	if errors.Is(getResult.Error, gorm.ErrRecordNotFound) {
+	if getResult.Error != nil || resultUser.ID == "" {
+		if errors.Is(getResult.Error, gorm.ErrRecordNotFound) || resultUser.ID != "" {
+			return entitiy.User{}, gorm.ErrRecordNotFound
+		}
 		return entitiy.User{}, getResult.Error
 	}
 
@@ -27,29 +30,28 @@ func (p Postgres) GetUserDB(id string) (user entitiy.User, err error) {
 
 // ユーザの削除
 func (p Postgres) DeleteUserDB(id string) (err error) {
-	deleteResult := p.Conn.Where("id = ?", id).Delete(&entitiy.User{})
 
-	if errors.Is(deleteResult.Error, gorm.ErrRecordNotFound) {
+	deleteResult := p.Conn.Where("id = ?", id).Delete(&entitiy.User{})
+	if deleteResult.Error != nil {
 		return deleteResult.Error
 	}
+
 	return nil
 }
 
 // ユーザの更新
-func (p Postgres) UpdateUserDB(updateUser entitiy.User) (user entitiy.User, err error) {
+func (p Postgres) UpdateUserDB(getUser entitiy.User, updateUser entitiy.User) (user entitiy.User, err error) {
 
-	resultUser := Users{}
-	getResult := p.Conn.Find(&resultUser, "id = ?", updateUser.ID)
-
-	if errors.Is(getResult.Error, gorm.ErrRecordNotFound) {
-		return entitiy.User{}, getResult.Error
+	getUser.Name = updateUser.Name
+	getUser.Email = updateUser.Email
+	resultUser := Users{
+		ID:       getUser.ID,
+		UserName: getUser.Name,
+		Email:    getUser.Email,
 	}
 
-	resultUser.UserName = updateUser.Name
-	resultUser.Email = updateUser.Email
 	updateResult := p.Conn.Save(&resultUser)
-
-	if errors.Is(updateResult.Error, gorm.ErrRecordNotFound) {
+	if updateResult.Error != nil {
 		return entitiy.User{}, updateResult.Error
 	}
 
@@ -66,12 +68,11 @@ func (p Postgres) CreateUserDB(createUser entitiy.User) (user entitiy.User, err 
 	resultUser := Users{}
 	getResult := p.Conn.Order("id desc").First(&resultUser)
 
-	if errors.Is(getResult.Error, gorm.ErrRecordNotFound) {
+	if getResult.Error != nil {
 		return entitiy.User{}, getResult.Error
 	}
 
 	i, _ := strconv.Atoi(resultUser.ID)
-
 	newUser := Users{
 		ID:       strconv.Itoa(i + 1),
 		UserName: createUser.Name,
@@ -79,8 +80,7 @@ func (p Postgres) CreateUserDB(createUser entitiy.User) (user entitiy.User, err 
 	}
 
 	createResult := p.Conn.Save(&newUser)
-
-	if errors.Is(createResult.Error, gorm.ErrRecordNotFound) {
+	if createResult.Error != nil {
 		return entitiy.User{}, createResult.Error
 	}
 
@@ -93,10 +93,11 @@ func (p Postgres) CreateUserDB(createUser entitiy.User) (user entitiy.User, err 
 
 // ユーザ一覧取得
 func (p Postgres) ListUsersDB() (user []entitiy.User, err error) {
+
 	resultUser := []Users{}
 	getResult := p.Conn.Order("id asc").Find(&resultUser)
 
-	if errors.Is(getResult.Error, gorm.ErrRecordNotFound) {
+	if getResult.Error != nil {
 		return nil, getResult.Error
 	}
 
