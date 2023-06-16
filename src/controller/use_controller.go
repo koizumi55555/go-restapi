@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"errors"
 	"koizumi55555/go-restapi/src/entitiy"
 	"koizumi55555/go-restapi/src/usecase"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type UserController struct {
@@ -22,25 +24,22 @@ func NewUserController(pif usecase.PostgresIf) UserController {
 func (uc UserController) GetUser(c *gin.Context) {
 
 	user, err := uc.UserUsecase.GetUser(c.Param("user_id"))
-	if err != nil {
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessage": err.Error(),
-		})
+	if err == nil {
+		c.JSON(http.StatusOK, user)
+	} else {
+		ErrorHandling(err, c)
 	}
-	c.JSON(http.StatusOK, user)
 }
 
 // ユーザの削除
 func (uc UserController) DeleteUser(c *gin.Context) {
 
 	err := uc.UserUsecase.DeleteUser(c.Param("user_id"))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessage": err.Error(),
-		})
+	if err == nil {
+		c.JSON(http.StatusNoContent, gin.H{})
+	} else {
+		ErrorHandling(err, c)
 	}
-	c.JSON(http.StatusNoContent, gin.H{})
 }
 
 // ユーザ情報の更新
@@ -59,12 +58,11 @@ func (uc UserController) UpdateUser(c *gin.Context) {
 	}
 
 	user, err := uc.UserUsecase.UpdateUser(updateUser)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessage": err.Error(),
-		})
+	if err == nil {
+		c.JSON(http.StatusOK, user)
+	} else {
+		ErrorHandling(err, c)
 	}
-	c.JSON(http.StatusOK, user)
 }
 
 // ユーザの登録
@@ -82,23 +80,31 @@ func (uc UserController) CreateUser(c *gin.Context) {
 	}
 
 	user, err := uc.UserUsecase.CreateUser(createUser)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"ErrorMessage": err.Error(),
-		})
+	if err == nil {
+		c.JSON(http.StatusOK, user)
+	} else {
+		ErrorHandling(err, c)
 	}
-	c.JSON(http.StatusOK, user)
 }
 
 // ユーザ情報の一覧取得
 func (uc UserController) ListUsers(c *gin.Context) {
 
 	user, err := uc.UserUsecase.ListUsers()
-	if err != nil {
+	if err == nil {
+		c.JSON(http.StatusOK, user)
+	} else {
+		ErrorHandling(err, c)
+	}
+}
+
+// エラーハンドリング
+func ErrorHandling(err error, c *gin.Context) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{})
+	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"ErrorMessage": err.Error(),
 		})
 	}
-	c.JSON(http.StatusOK, user)
-
 }
