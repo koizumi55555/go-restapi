@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"koizumi55555/go-restapi/src/entitiy"
 	"koizumi55555/go-restapi/src/usecase"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -14,9 +16,19 @@ type UserController struct {
 	UserUsecase usecase.UserUsecase
 }
 
+type ServerController struct {
+	ServerUsecase usecase.ServerUsecase
+}
+
 func NewUserController(pif usecase.PostgresIf) UserController {
 	return UserController{
 		UserUsecase: usecase.NewUserUsecase(pif),
+	}
+}
+
+func NewServerController(clientID, clientSecret string) ServerController {
+	return ServerController{
+		ServerUsecase: usecase.NewServerUsecase(clientID, clientSecret),
 	}
 }
 
@@ -96,6 +108,41 @@ func (uc UserController) ListUsers(c *gin.Context) {
 	} else {
 		ErrorHandling(err, c)
 	}
+}
+
+// Googleの認可ログイン画面にリダイレクト
+func (s *ServerController) Authorize(c *gin.Context) {
+	u, err := s.ServerUsecase.CreateAuthorizationRequestURL()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	// 認可リクエストを送信
+	c.Redirect(http.StatusMovedPermanently, u.String())
+
+}
+
+// アクセストークンを取得し、レスポンスとしてを返却
+func (s *ServerController) Callback(c *gin.Context) {
+
+	code := c.Query("code")
+	if code == "" {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	// contextをタイムアウト機能付きで生成
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	token, err := s.ServerUsecase.Exchange(ctx, code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	// レスポンスとしてを返却
+	c.JSON(http.StatusOK, gin.H{"accessToken": token.AccessToken})
 }
 
 // エラーハンドリング

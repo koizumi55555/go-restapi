@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Server(uc controller.UserController) *gin.Engine {
+func Server(uc controller.UserController, s controller.ServerController) *gin.Engine {
 
 	engine := gin.Default()
 	engine.GET("/users/:user_id", uc.GetUser)
@@ -14,6 +14,8 @@ func Server(uc controller.UserController) *gin.Engine {
 	engine.PUT("/users/:user_id", uc.UpdateUser)
 	engine.POST("/users", uc.CreateUser)
 	engine.GET("/users", uc.ListUsers)
+	engine.GET("/oauth", s.Authorize)
+	engine.GET("/auth_redirect", s.Callback)
 
 	return engine
 }
